@@ -1,0 +1,19 @@
+{
+  "name": "linktoon",
+  "private": true,
+  "packageManager": "npm@11.13.0",
+  "workspaces": [
+    "apps/web"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace @linktoon/web",
+    "build": "npm run build --workspace @linktoon/web",
+    "start": "npm run start --workspace @linktoon/web",
+    "lint": "npm run lint --workspace @linktoon/web",
+    "typecheck": "npm run typecheck --workspace @linktoon/web",
+    "test": "npm run test --workspace @linktoon/web"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

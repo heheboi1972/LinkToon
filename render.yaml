@@ -1,0 +1,48 @@
+services:
+  - type: web
+    name: linktoon-api
+    runtime: python
+    rootDir: apps/api
+    buildCommand: uv sync --frozen --no-dev
+    startCommand: uv run --no-sync alembic upgrade head && uv run --no-sync uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.14
+      - key: UV_VERSION
+        value: 0.10.9
+      - key: APP_ENV
+        value: production
+      - key: AUTH_MODE
+        value: supabase
+      - key: STORAGE_PROVIDER
+        value: supabase
+      - key: MOCK_AI
+        value: "true"
+      - key: LOCAL_AUTH_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+      - key: API_PUBLIC_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_STORAGE_BUCKET
+        value: linktoon-private
+      - key: MAX_UPLOAD_BYTES
+        value: "10485760"
+      - key: AI_QUOTAS_ENABLED
+        value: "true"
+      - key: STORY_DAILY_LIMIT
+        value: "10"
+      - key: IMAGE_DAILY_LIMIT
+        value: "5"
+      - key: MOTION_DAILY_LIMIT
+        value: "2"
