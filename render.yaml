@@ -105,6 +105,8 @@ services:
         sync: false
       - key: SUPABASE_STORAGE_BUCKET
         value: linktoon-private
+      - key: MAX_UPLOAD_BYTES
+        value: "10485760"
       - key: OPENAI_API_KEY
         sync: false
       - key: OPENAI_STORY_MODEL
