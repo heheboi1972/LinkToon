@@ -4,12 +4,21 @@ version = "0.1.0"
 description = "LinkToon application API"
 requires-python = ">=3.12"
 dependencies = [
-  "fastapi>=0.115,<1", "uvicorn[standard]>=0.34,<1",
-  "sqlalchemy>=2.0.38,<2.1", "alembic>=1.14,<2",
-  "psycopg[binary]>=3.2,<4", "pydantic-settings>=2.7,<3",
-  "email-validator>=2.2,<3", "httpx>=0.28,<1",
-  "PyJWT>=2.10,<3", "pillow>=11.1,<13",
-  "celery[redis]>=5.4,<6", "pg8000>=1.31,<2"
+  "fastapi>=0.115,<1",
+  "uvicorn[standard]>=0.34,<1",
+  "sqlalchemy>=2.0.38,<2.1",
+  "alembic>=1.14,<2",
+  "psycopg[binary]>=3.2,<4",
+  "pydantic-settings>=2.7,<3",
+  "email-validator>=2.2,<3",
+  "httpx>=0.28,<1",
+  "PyJWT>=2.10,<3",
+  "pillow>=11.1,<13",
+  "celery[redis]>=5.4,<6",
+  "pg8000>=1.31,<2",
+  "openai>=3.16.2,<4",
+  "fal-client>=1.0.3,<2",
+  "runwayml>=5.20.1,<6",
 ]
 
 [dependency-groups]
@@ -18,6 +27,7 @@ dev = ["pytest>=8.3,<10", "ruff>=0.11,<1", "mypy>=1.15,<2"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+addopts = ["--basetemp=.data/pytest", "-p", "no:cacheprovider"]
 
 [tool.ruff]
 target-version = "py312"

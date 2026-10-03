@@ -21,6 +21,9 @@ const { default: EmbeddedPostgres } = await import(
   )
 );
 process.chdir(verificationRoot);
+const pythonEnvironment = process.env.UV_PROJECT_ENVIRONMENT
+  ? path.resolve(process.env.UV_PROJECT_ENVIRONMENT)
+  : path.join(root, "apps", "api", ".venv");
 const pg = new EmbeddedPostgres({
   databaseDir: path.join(verificationRoot, "cluster"),
   user: "linktoon",
@@ -41,10 +44,7 @@ try {
   await pg.createDatabase("linktoon_verify");
   const child = spawn(
     path.join(
-      root,
-      "apps",
-      "api",
-      ".venv",
+      pythonEnvironment,
       process.platform === "win32" ? "Scripts/python.exe" : "bin/python",
     ),
     [

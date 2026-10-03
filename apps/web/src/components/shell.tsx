@@ -5,14 +5,19 @@ import { useEffect, useState } from "react";
 import {
   Activity,
   ArrowUpRight,
+  BookOpen,
   ChevronsUpDown,
   Clapperboard,
+  Eye,
   FolderOpen,
   LayoutGrid,
   Menu,
   Plus,
+  Send,
   Settings,
   Sparkles,
+  Users,
+  Waypoints,
   X,
 } from "lucide-react";
 import { useAuth } from "@/components/providers";
@@ -202,6 +207,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             </Link>
           </Button>
         </header>
+        <ProjectWorkspaceNav pathname={path} />
         <main className="mx-auto max-w-[1440px] px-5 py-8 sm:px-9 lg:px-11 lg:py-10">
           {children}
         </main>
@@ -210,6 +216,80 @@ export function Shell({ children }: { children: React.ReactNode }) {
         </footer>
       </div>
     </div>
+  );
+}
+
+function ProjectWorkspaceNav({ pathname }: { pathname: string }) {
+  const projectMatch = pathname.match(/^\/projects\/([^/]+)/);
+  const episodeMatch = pathname.match(/^\/projects\/[^/]+\/episodes\/([^/]+)/);
+  if (!projectMatch || pathname.includes("/read")) return null;
+  const projectId = projectMatch[1];
+  const episodeId = episodeMatch?.[1];
+  const base = `/projects/${projectId}`;
+  const items = [
+    {
+      href: base,
+      label: "Overview",
+      icon: LayoutGrid,
+      active: pathname === base,
+    },
+    {
+      href: `${base}/story`,
+      label: "Story",
+      icon: BookOpen,
+      active: pathname.startsWith(`${base}/story`),
+    },
+    {
+      href: `${base}/characters`,
+      label: "Characters",
+      icon: Users,
+      active: pathname.startsWith(`${base}/characters`),
+    },
+    {
+      href: `${base}/story#scenes`,
+      label: "Scenes",
+      icon: Waypoints,
+      active: pathname.startsWith(`${base}/episodes`),
+    },
+    {
+      href: episodeId
+        ? `${base}/episodes/${episodeId}/read`
+        : `${base}#episodes`,
+      label: "Reader",
+      icon: Eye,
+      active: Boolean(episodeId && pathname.endsWith("/read")),
+    },
+    {
+      href: episodeId
+        ? `${base}/episodes/${episodeId}/publish`
+        : `${base}#episodes`,
+      label: "Publish",
+      icon: Send,
+      active: pathname.endsWith("/publish"),
+    },
+  ];
+  return (
+    <nav
+      aria-label="프로젝트 메뉴"
+      className="mx-auto flex max-w-[1440px] gap-1 overflow-x-auto border-b border-zinc-200/70 px-5 sm:px-9 lg:px-11"
+    >
+      {items.map(({ href, label, icon: Icon, active }) => (
+        <Link
+          key={label}
+          href={href}
+          aria-current={active ? "page" : undefined}
+          className={cn(
+            "relative inline-flex min-h-12 shrink-0 items-center gap-2 border-b-2 px-3 text-xs font-semibold transition-colors",
+            active
+              ? "border-violet-400 bg-violet-50/70 text-violet-600"
+              : "border-transparent text-zinc-500 hover:bg-white hover:text-zinc-900",
+          )}
+        >
+          <Icon className="size-4" aria-hidden="true" />
+          {label}
+        </Link>
+      ))}
+    </nav>
   );
 }
 

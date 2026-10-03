@@ -47,7 +47,7 @@ def test_supabase_rls_owner_and_password_isolation(
             connection.scalar(
                 text("SELECT count(*) FROM pg_tables WHERE schemaname='public' AND rowsecurity")
             )
-            == 14
+            == 17
         )
         connection.execute(text("SET LOCAL ROLE authenticated"))
         connection.execute(
@@ -69,3 +69,6 @@ def test_supabase_rls_owner_and_password_isolation(
     with pytest.raises(DBAPIError), engine.begin() as connection:
         connection.execute(text("SET LOCAL ROLE anon"))
         connection.execute(text("SELECT * FROM public.projects"))
+    with pytest.raises(DBAPIError), engine.begin() as connection:
+        connection.execute(text("SET LOCAL ROLE anon"))
+        connection.execute(text("SELECT * FROM public.publication_scenes"))

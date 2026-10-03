@@ -40,6 +40,14 @@ class LocalStorage:
         except OSError as exc:
             raise StorageError() from exc
 
+    def read_range(self, key: str, start: int, end: int) -> bytes:
+        try:
+            with self.path(key).open("rb") as source:
+                source.seek(start)
+                return source.read(end - start + 1)
+        except OSError as exc:
+            raise StorageError() from exc
+
     def delete(self, key: str) -> None:
         try:
             self.path(key).unlink(missing_ok=True)
@@ -76,6 +84,20 @@ class SupabaseStorage:
             response = httpx.get(self.url(key), headers=self.headers, timeout=30)
             response.raise_for_status()
             return response.content
+        except httpx.HTTPError as exc:
+            raise StorageError() from exc
+
+    def read_range(self, key: str, start: int, end: int) -> bytes:
+        try:
+            response = httpx.get(
+                self.url(key),
+                headers={**self.headers, "Range": f"bytes={start}-{end}"},
+                timeout=30,
+            )
+            if response.status_code not in {200, 206}:
+                response.raise_for_status()
+            content = response.content
+            return content if response.status_code == 206 else content[start : end + 1]
         except httpx.HTTPError as exc:
             raise StorageError() from exc
 

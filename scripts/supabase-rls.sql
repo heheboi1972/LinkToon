@@ -8,7 +8,8 @@ BEGIN
   FOREACH table_name IN ARRAY ARRAY[
     'profiles','projects','project_bibles','characters','character_references',
     'episodes','scenes','panels','assets','motion_plans','motion_layers',
-    'animations','generation_jobs','publish_versions'
+    'animations','generation_jobs','publish_versions','publications',
+    'publication_snapshots','publication_scenes'
   ] LOOP
     EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', table_name);
     EXECUTE format('REVOKE ALL ON public.%I FROM anon, authenticated', table_name);
@@ -61,6 +62,22 @@ BEGIN
        (EXISTS (SELECT 1 FROM public.episodes e JOIN public.projects p ON p.id = e.project_id
        WHERE e.id = %I.episode_id AND p.owner_id = (SELECT auth.uid())))', table_name, table_name);
   END LOOP;
+  DROP POLICY IF EXISTS owner_read ON public.publications;
+  CREATE POLICY owner_read ON public.publications FOR SELECT TO authenticated
+  USING (owner_id = (SELECT auth.uid()));
+  DROP POLICY IF EXISTS owner_read ON public.publication_snapshots;
+  CREATE POLICY owner_read ON public.publication_snapshots FOR SELECT TO authenticated
+  USING (EXISTS (
+    SELECT 1 FROM public.publications pub
+    WHERE pub.id = publication_snapshots.publication_id AND pub.owner_id = (SELECT auth.uid())
+  ));
+  DROP POLICY IF EXISTS owner_read ON public.publication_scenes;
+  CREATE POLICY owner_read ON public.publication_scenes FOR SELECT TO authenticated
+  USING (EXISTS (
+    SELECT 1 FROM public.publication_snapshots snap
+    JOIN public.publications pub ON pub.id = snap.publication_id
+    WHERE snap.id = publication_scenes.snapshot_id AND pub.owner_id = (SELECT auth.uid())
+  ));
   FOREACH table_name IN ARRAY ARRAY['motion_plans','motion_layers','animations'] LOOP
     EXECUTE format('DROP POLICY IF EXISTS owner_read ON public.%I', table_name);
     EXECUTE format(
@@ -83,7 +100,7 @@ USING (EXISTS (
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES ('linktoon-private', 'linktoon-private', false, 10485760,
         ARRAY['image/png','image/jpeg','image/webp'])
-ON CONFLICT (id) DO UPDATE SET public = false, file_size_limit = 10485760,
-  allowed_mime_types = ARRAY['image/png','image/jpeg','image/webp'];
+ON CONFLICT (id) DO UPDATE SET public = false, file_size_limit = 104857600,
+  allowed_mime_types = ARRAY['image/png','image/jpeg','image/webp','video/mp4'];
 
 COMMIT;

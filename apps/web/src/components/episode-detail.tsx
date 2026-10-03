@@ -3,7 +3,15 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, ImagePlus, Plus, Save, X } from "lucide-react";
+import {
+  ArrowLeft,
+  BookOpen,
+  ImagePlus,
+  Plus,
+  Save,
+  Send,
+  X,
+} from "lucide-react";
 import { api, patch, post, remove, uploadImage } from "@/lib/api";
 import type { Episode, Panel } from "@/lib/types";
 import { PageHeading, ConfirmDelete } from "@/components/shell";
@@ -80,6 +88,18 @@ export function EpisodeDetail({
         description={`${panels.data?.length || 0}개의 패널 · 한 장면씩 이야기를 채워 보세요.`}
       >
         <div className="flex gap-2">
+          <Button asChild variant="outline" size="sm">
+            <Link href={`/projects/${projectId}/episodes/${episodeId}/read`}>
+              <BookOpen />
+              읽기
+            </Link>
+          </Button>
+          <Button asChild variant="outline" size="sm">
+            <Link href={`/projects/${projectId}/episodes/${episodeId}/publish`}>
+              <Send />
+              게시
+            </Link>
+          </Button>
           <Button
             variant="outline"
             size="sm"

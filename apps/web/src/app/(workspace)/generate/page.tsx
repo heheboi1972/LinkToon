@@ -8,7 +8,7 @@ export default function GeneratePage() {
       <PageHeading
         eyebrow="IMAGE STUDIO"
         title="머릿속 장면을 꺼내는 곳"
-        description="AI 이미지 생성은 Phase 3에서 제공됩니다."
+        description="AI 이미지는 프로젝트 Story의 각 Scene에서 생성하고 다시 만들 수 있습니다."
       />
       <div className="grid overflow-hidden rounded-2xl border border-zinc-200 bg-white md:grid-cols-2">
         <img
@@ -18,10 +18,10 @@ export default function GeneratePage() {
         />
         <div className="flex flex-col items-start justify-center p-8">
           <ImagePlus className="mb-5 size-8 text-violet-500" />
-          <h2 className="text-xl font-bold">지금은 직접 그린 장면부터</h2>
+          <h2 className="text-xl font-bold">Story Scene에서 이미지 만들기</h2>
           <p className="mb-6 mt-4 text-sm leading-7 text-zinc-500">
-            프로젝트의 이미지 보관함에 PNG, JPG, WebP 이미지를 업로드하거나,
-            에피소드에서 패널에 바로 추가할 수 있어요.
+            프로젝트의 Story를 생성한 뒤 각 Scene에서 AI 이미지를 만들거나
+            다시 생성할 수 있어요. 직접 만든 이미지는 보관함에 업로드하세요.
           </p>
           <Button asChild>
             <Link href="/projects">내 프로젝트 열기</Link>

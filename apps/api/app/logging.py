@@ -38,10 +38,16 @@ class SensitiveDataFilter(logging.Filter):
         return value
 
     def filter(self, record: logging.LogRecord) -> bool:
-        if isinstance(record.args, tuple) and len(record.args) == 5:
+        if (
+            record.name == "uvicorn.access"
+            and isinstance(record.args, tuple)
+            and len(record.args) == 5
+        ):
             arguments = list(record.args)
             arguments[2] = str(arguments[2]).split("?", 1)[0]
-            record.args = tuple(arguments)
+            record.msg = self.sanitize(record.msg)
+            record.args = tuple(self.sanitize(arguments))
+            return True
         try:
             rendered = record.getMessage()
         except (TypeError, ValueError):

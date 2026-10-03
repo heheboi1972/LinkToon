@@ -152,15 +152,14 @@ export function ProjectWizard() {
                 {
                   value: "assisted",
                   label: "AI와 함께 만들기",
-                  description:
-                    "이야기는 내가, 아이디어는 AI와 함께. AI 연결은 Phase 3 예정.",
+                  description: "아이디어를 적고 AI Story 초안을 만들어 보세요.",
                   icon: Sparkles,
                 },
                 {
                   value: "ai_first",
                   label: "AI로 시작하기",
                   description:
-                    "아이디어에서 장면까지 생성으로 시작해요. AI 연결은 Phase 3 예정.",
+                    "아이디어에서 장면별 Story 초안까지 AI로 시작해요.",
                   icon: WandSparkles,
                 },
               ].map(({ value, label, description, icon: Icon }) => (

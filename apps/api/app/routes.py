@@ -1,22 +1,32 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Query, Request, Response
+from fastapi import APIRouter, Header, Query, Request, Response
 from sqlalchemy import select
 from starlette.concurrency import run_in_threadpool
 
 from app import auth
 from app.assets import AssetService
 from app.auth import DB, Config, User
+from app.characters import CharacterService
 from app.errors import ApplicationError
-from app.models import Asset, Episode, GenerationJob, Panel, Project, ProjectBible
+from app.models import Asset, Episode, GenerationJob, Panel, Project, ProjectBible, Scene
+from app.publication import PublicationService
+from app.reader import ReaderService
 from app.repository import Repository
 from app.schemas import (
     AssetOut,
     BibleOut,
+    CharacterCreate,
+    CharacterOut,
+    CharacterPatch,
+    CharacterReferenceSelect,
     EpisodeCreate,
     EpisodeOut,
     EpisodePatch,
+    EpisodeReaderOut,
+    JobAccepted,
+    JobDetailOut,
     JobOut,
     Login,
     PanelCreate,
@@ -25,10 +35,17 @@ from app.schemas import (
     ProfileOut,
     ProjectCreate,
     ProjectOut,
+    ProjectOverviewOut,
     ProjectPatch,
+    PublicationCreate,
+    PublicationOut,
+    PublicationPatch,
+    PublicationReaderOut,
     QuotaOut,
+    SceneOut,
     SessionOut,
     Signup,
+    StoryGenerationRequest,
     UploadComplete,
     UploadRequest,
     UploadTicket,
@@ -38,6 +55,7 @@ from app.services import GenerationService, WorkspaceService
 router = APIRouter(prefix="/api/v1")
 Limit = Annotated[int, Query(ge=1, le=200)]
 Offset = Annotated[int, Query(ge=0)]
+IdempotencyKey = Annotated[str, Header(alias="Idempotency-Key", min_length=1, max_length=200)]
 
 
 @router.get("/config", tags=["system"])
@@ -90,6 +108,13 @@ def get_project(project_id: UUID, db: DB, user: User) -> Project:
     return Repository(db, user.id).project(project_id)
 
 
+@router.get("/projects/{project_id}/overview", response_model=ProjectOverviewOut, tags=["projects"])
+def get_project_overview(
+    project_id: UUID, db: DB, user: User, settings: Config
+) -> ProjectOverviewOut:
+    return PublicationService(db, user.id, settings).overview(project_id)
+
+
 @router.patch("/projects/{project_id}", response_model=ProjectOut, tags=["projects"])
 def update_project(project_id: UUID, data: ProjectPatch, db: DB, user: User) -> Project:
     return WorkspaceService(db, user.id).update_project(project_id, data)
@@ -109,11 +134,124 @@ def get_bible(project_id: UUID, db: DB, user: User) -> ProjectBible:
     return bible
 
 
+@router.get("/projects/{project_id}/characters", response_model=None, tags=["characters"])
+def list_characters(
+    project_id: UUID, db: DB, user: User, settings: Config, limit: Limit = 100, offset: Offset = 0
+) -> list[object]:
+    service = CharacterService(db, user.id, settings)
+    characters = Repository(db, user.id).list_characters(project_id, limit=limit, offset=offset)
+    result: list[object] = []
+    for character in characters:
+        if (
+            not (character.character_bible or {}).get("schema_version")
+            and not character.reference_asset_id
+        ):
+            result.append(
+                {
+                    "id": character.id,
+                    "project_id": character.project_id,
+                    "name": character.name,
+                    "description": character.description,
+                }
+            )
+        else:
+            result.append(service.serialize(character))
+    return result
+
+
+@router.post(
+    "/projects/{project_id}/characters",
+    response_model=CharacterOut,
+    status_code=201,
+    tags=["characters"],
+)
+def create_character(
+    project_id: UUID, data: CharacterCreate, db: DB, user: User, settings: Config
+) -> CharacterOut:
+    return CharacterService(db, user.id, settings).create(project_id, data)
+
+
+@router.get("/characters/{character_id}", response_model=CharacterOut, tags=["characters"])
+def get_character(character_id: UUID, db: DB, user: User, settings: Config) -> CharacterOut:
+    return CharacterService(db, user.id, settings).serialize(
+        CharacterService(db, user.id, settings).get(character_id)
+    )
+
+
+@router.patch("/characters/{character_id}", response_model=CharacterOut, tags=["characters"])
+def update_character(
+    character_id: UUID, data: CharacterPatch, db: DB, user: User, settings: Config
+) -> CharacterOut:
+    return CharacterService(db, user.id, settings).update(character_id, data)
+
+
+@router.delete("/characters/{character_id}", status_code=204, tags=["characters"])
+def delete_character(character_id: UUID, db: DB, user: User, settings: Config) -> None:
+    CharacterService(db, user.id, settings).delete(character_id)
+
+
+@router.put(
+    "/characters/{character_id}/reference", response_model=CharacterOut, tags=["characters"]
+)
+def select_character_reference(
+    character_id: UUID, data: CharacterReferenceSelect, db: DB, user: User, settings: Config
+) -> CharacterOut:
+    return CharacterService(db, user.id, settings).select_reference(character_id, data.asset_id)
+
+
+@router.delete(
+    "/characters/{character_id}/reference", response_model=CharacterOut, tags=["characters"]
+)
+def clear_character_reference(
+    character_id: UUID, db: DB, user: User, settings: Config
+) -> CharacterOut:
+    return CharacterService(db, user.id, settings).clear_reference(character_id)
+
+
+@router.post(
+    "/characters/{character_id}/reference/generate",
+    response_model=JobAccepted,
+    status_code=202,
+    tags=["characters"],
+)
+def generate_character_reference(
+    character_id: UUID,
+    db: DB,
+    user: User,
+    settings: Config,
+    idempotency_key: IdempotencyKey,
+) -> JobAccepted:
+    job = GenerationService(db, user.id, settings).create_character_reference_job(
+        character_id, idempotency_key
+    )
+    return JobAccepted.model_validate({"job_id": job.id, "status": job.status})
+
+
 @router.post(
     "/projects/{project_id}/episodes", response_model=EpisodeOut, status_code=201, tags=["episodes"]
 )
 def create_episode(project_id: UUID, data: EpisodeCreate, db: DB, user: User) -> Episode:
     return WorkspaceService(db, user.id).create_episode(project_id, data)
+
+
+@router.post(
+    "/projects/{project_id}/stories/generate",
+    response_model=JobAccepted,
+    status_code=202,
+    tags=["stories"],
+)
+def generate_story(
+    project_id: UUID,
+    data: StoryGenerationRequest,
+    db: DB,
+    user: User,
+    settings: Config,
+    idempotency_key: IdempotencyKey,
+) -> JobAccepted:
+    job = GenerationService(db, user.id, settings).create_story_job(
+        project_id, data, idempotency_key
+    )
+    return JobAccepted.model_validate({"job_id": job.id, "status": job.status})
 
 
 @router.get("/projects/{project_id}/episodes", response_model=list[EpisodeOut], tags=["episodes"])
@@ -137,6 +275,93 @@ def get_episode(episode_id: UUID, db: DB, user: User) -> Episode:
     return Repository(db, user.id).episode(episode_id)
 
 
+@router.get("/episodes/{episode_id}/reader", response_model=EpisodeReaderOut, tags=["reader"])
+def get_episode_reader(episode_id: UUID, db: DB, user: User, settings: Config) -> EpisodeReaderOut:
+    return ReaderService(db, user.id, settings).episode(episode_id)
+
+
+@router.post(
+    "/episodes/{episode_id}/publish",
+    response_model=PublicationOut,
+    status_code=201,
+    tags=["publications"],
+)
+def publish_episode(
+    episode_id: UUID, data: PublicationCreate, db: DB, user: User, settings: Config
+) -> PublicationOut:
+    return PublicationService(db, user.id, settings).publish(episode_id, data)
+
+
+@router.get(
+    "/episodes/{episode_id}/publication", response_model=PublicationOut, tags=["publications"]
+)
+def get_episode_publication(
+    episode_id: UUID, db: DB, user: User, settings: Config
+) -> PublicationOut:
+    return PublicationService(db, user.id, settings).for_episode(episode_id)
+
+
+@router.patch(
+    "/publications/{publication_id}", response_model=PublicationOut, tags=["publications"]
+)
+def update_publication(
+    publication_id: UUID,
+    data: PublicationPatch,
+    db: DB,
+    user: User,
+    settings: Config,
+) -> PublicationOut:
+    return PublicationService(db, user.id, settings).update(publication_id, data)
+
+
+@router.post(
+    "/publications/{publication_id}/republish",
+    response_model=PublicationOut,
+    tags=["publications"],
+)
+def republish(publication_id: UUID, db: DB, user: User, settings: Config) -> PublicationOut:
+    return PublicationService(db, user.id, settings).republish(publication_id)
+
+
+@router.post(
+    "/publications/{publication_id}/unpublish",
+    response_model=PublicationOut,
+    tags=["publications"],
+)
+def unpublish(publication_id: UUID, db: DB, user: User, settings: Config) -> PublicationOut:
+    return PublicationService(db, user.id, settings).unpublish(publication_id)
+
+
+@router.get("/publications/{slug}", response_model=PublicationReaderOut, tags=["public reader"])
+def public_publication(slug: str, db: DB, settings: Config) -> PublicationReaderOut:
+    return PublicationService(db, None, settings).public_reader(slug)
+
+
+@router.get("/publications/{slug}/assets/{asset_id}/content", tags=["public reader"])
+def publication_asset_content(
+    slug: str,
+    asset_id: UUID,
+    token: str,
+    db: DB,
+    settings: Config,
+    request: Request,
+) -> Response:
+    content, mime_type, status_code, extra_headers = PublicationService(
+        db, None, settings
+    ).public_media(slug, asset_id, token, request.headers.get("range"))
+    return Response(
+        content=content,
+        media_type=mime_type,
+        status_code=status_code,
+        headers={
+            **extra_headers,
+            "Cache-Control": "private, max-age=60",
+            "X-Content-Type-Options": "nosniff",
+            "Referrer-Policy": "no-referrer",
+        },
+    )
+
+
 @router.patch("/episodes/{episode_id}", response_model=EpisodeOut, tags=["episodes"])
 def update_episode(episode_id: UUID, data: EpisodePatch, db: DB, user: User) -> Episode:
     return WorkspaceService(db, user.id).update_episode(episode_id, data)
@@ -145,6 +370,45 @@ def update_episode(episode_id: UUID, data: EpisodePatch, db: DB, user: User) -> 
 @router.delete("/episodes/{episode_id}", status_code=204, tags=["episodes"])
 def delete_episode(episode_id: UUID, db: DB, user: User) -> None:
     WorkspaceService(db, user.id).delete_episode(episode_id)
+
+
+@router.get("/scenes/{scene_id}", response_model=SceneOut, tags=["scenes"])
+def get_scene(scene_id: UUID, db: DB, user: User) -> Scene:
+    return Repository(db, user.id).scene(scene_id)
+
+
+@router.post(
+    "/scenes/{scene_id}/image/generate",
+    response_model=JobAccepted,
+    status_code=202,
+    tags=["scenes"],
+)
+def generate_scene_image(
+    scene_id: UUID,
+    db: DB,
+    user: User,
+    settings: Config,
+    idempotency_key: IdempotencyKey,
+) -> JobAccepted:
+    job = GenerationService(db, user.id, settings).create_scene_image_job(scene_id, idempotency_key)
+    return JobAccepted.model_validate({"job_id": job.id, "status": job.status})
+
+
+@router.post(
+    "/scenes/{scene_id}/video/generate",
+    response_model=JobAccepted,
+    status_code=202,
+    tags=["scenes"],
+)
+def generate_scene_video(
+    scene_id: UUID,
+    db: DB,
+    user: User,
+    settings: Config,
+    idempotency_key: IdempotencyKey,
+) -> JobAccepted:
+    job = GenerationService(db, user.id, settings).create_scene_video_job(scene_id, idempotency_key)
+    return JobAccepted.model_validate({"job_id": job.id, "status": job.status})
 
 
 @router.post(
@@ -239,12 +503,18 @@ def get_asset(asset_id: UUID, db: DB, user: User, settings: Config) -> AssetOut:
 
 
 @router.get("/assets/{asset_id}/content", tags=["assets"])
-def asset_content(asset_id: UUID, token: str, db: DB, settings: Config) -> Response:
-    content, mime_type = AssetService(db, settings).content(asset_id, token)
+def asset_content(
+    asset_id: UUID, token: str, db: DB, settings: Config, request: Request
+) -> Response:
+    content, mime_type, status_code, extra_headers = AssetService(db, settings).media_content(
+        asset_id, token, request.headers.get("range")
+    )
     return Response(
         content=content,
         media_type=mime_type,
+        status_code=status_code,
         headers={
+            **extra_headers,
             "Cache-Control": "private, max-age=300",
             "X-Content-Type-Options": "nosniff",
             "Referrer-Policy": "no-referrer",
@@ -268,6 +538,16 @@ def list_jobs(db: DB, user: User, limit: Limit = 20, offset: Offset = 0) -> list
             .offset(offset)
         )
     )
+
+
+@router.get("/jobs/{job_id}", response_model=JobDetailOut, tags=["jobs"])
+def get_job(job_id: UUID, db: DB, user: User) -> GenerationJob:
+    return Repository(db, user.id).job(job_id)
+
+
+@router.post("/jobs/{job_id}/cancel", response_model=JobDetailOut, tags=["jobs"])
+def cancel_job(job_id: UUID, db: DB, user: User, settings: Config) -> GenerationJob:
+    return GenerationService(db, user.id, settings).cancel(job_id)
 
 
 @router.get("/quotas", response_model=QuotaOut, tags=["jobs"])

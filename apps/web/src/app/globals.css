@@ -1,8 +1,17 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f8f9fc;
-  --foreground: #18181b;
+  color-scheme: dark;
+  --background: #08090d;
+  --foreground: #f4f3f8;
+  --surface: #111318;
+  --surface-elevated: #171920;
+  --line: rgb(255 255 255 / 8%);
+  --line-hover: rgb(255 255 255 / 15%);
+  --text-secondary: #b2b2bf;
+  --text-muted: #90909e;
+  --accent: #b8a7ff;
+  --accent-soft: rgb(149 117 255 / 11%);
 }
 @theme inline {
   --color-background: var(--background);
@@ -31,33 +40,138 @@ select {
   cursor: pointer;
 }
 ::selection {
-  background: #ddd6fe;
+  background: #4b3c78;
+  color: #fff;
 }
 .field-label {
   display: grid;
   gap: 8px;
   font-size: 13px;
   font-weight: 600;
-  color: #52525b;
+  color: var(--text-secondary);
 }
 .field-label select {
   height: 44px;
-  border: 1px solid #e4e4e7;
+  border: 1px solid var(--line);
   border-radius: 12px;
-  background: white;
+  background: var(--surface-elevated);
+  color: var(--foreground);
   padding: 0 12px;
   font: inherit;
   font-weight: 400;
 }
 .field-label select:focus-visible {
-  outline: 3px solid #ede9fe;
-  border-color: #a78bfa;
+  outline: 3px solid rgb(184 167 255 / 24%);
+  border-color: var(--accent);
 }
 .hero-grid {
   background-image:
     linear-gradient(#ffffff06 1px, transparent 1px),
     linear-gradient(90deg, #ffffff06 1px, transparent 1px);
   background-size: 32px 32px;
+}
+
+/* LinkToon's shared dark studio palette, applied to the existing utility classes. */
+[class~="bg-[#f8f9fc]"],
+[class~="bg-[#faf9fe]"] {
+  background-color: var(--background);
+}
+[class~="bg-white"],
+[class~="bg-white/80"],
+[class~="bg-white/40"] {
+  background-color: var(--surface);
+}
+[class~="bg-zinc-50"],
+[class~="bg-zinc-100"] {
+  background-color: var(--surface-elevated);
+}
+[class~="bg-violet-50"],
+[class~="bg-violet-50/70"],
+[class~="bg-violet-100"],
+[class~="bg-[#f6f4fd]"] {
+  background-color: var(--accent-soft);
+}
+[class~="bg-red-50"] {
+  background-color: rgb(239 68 68 / 10%);
+}
+[class~="bg-orange-100"] {
+  background-color: rgb(249 115 22 / 13%);
+}
+[class~="text-zinc-950"],
+[class~="text-zinc-900"],
+[class~="text-zinc-800"] {
+  color: #f1f0f5;
+}
+[class~="text-zinc-700"],
+[class~="text-zinc-600"],
+[class~="text-zinc-500"] {
+  color: var(--text-secondary);
+}
+[class~="text-zinc-400"],
+[class~="text-zinc-300"] {
+  color: var(--text-muted);
+}
+[class~="text-violet-950"],
+[class~="text-violet-900"],
+[class~="text-violet-800"],
+[class~="text-violet-700"],
+[class~="text-violet-600"] {
+  color: var(--accent);
+}
+[class~="text-red-700"],
+[class~="text-red-600"] {
+  color: #ff9e9e;
+}
+[class~="text-orange-700"] {
+  color: #ffbd86;
+}
+[class~="border-zinc-100"],
+[class~="border-zinc-200"],
+[class~="border-zinc-200/60"],
+[class~="border-zinc-200/70"],
+[class~="border-zinc-200/80"] {
+  border-color: var(--line);
+}
+[class~="border-violet-100"],
+[class~="border-violet-200"] {
+  border-color: rgb(184 167 255 / 20%);
+}
+[class~="hover:bg-zinc-50"]:hover,
+[class~="hover:bg-white"]:hover {
+  background-color: var(--surface-elevated);
+}
+[class~="hover:border-violet-300"]:hover {
+  border-color: rgb(184 167 255 / 40%);
+}
+input,
+textarea,
+select {
+  color: var(--foreground);
+}
+input::placeholder,
+textarea::placeholder {
+  color: #777785;
+}
+button,
+a,
+input,
+textarea,
+select {
+  transition-duration: 180ms;
+}
+:focus-visible {
+  outline-color: rgb(184 167 255 / 70%);
+}
+.hero-grid::after {
+  background: radial-gradient(
+    ellipse at 72% 12%,
+    rgb(145 111 255 / 10%),
+    transparent 54%
+  );
+  content: "";
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
 }
 @media (prefers-reduced-motion: reduce) {
   *,

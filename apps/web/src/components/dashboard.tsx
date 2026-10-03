@@ -14,6 +14,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { api } from "@/lib/api";
+import { jobStatusLabel } from "@/lib/job-status";
 import type { Project, Job } from "@/lib/types";
 import { useAuth } from "@/components/providers";
 import { PageHeading } from "@/components/shell";
@@ -118,7 +119,7 @@ export function Dashboard({ allProjects = false }: { allProjects?: boolean }) {
                   </span>
                 </h3>
                 <p className="mt-1 text-xs text-zinc-400">
-                  이미지 생성은 Phase 3에서 연결됩니다
+                  Story의 각 Scene에서 AI 이미지를 생성할 수 있어요
                 </p>
               </div>
               <ArrowRight className="size-4 text-zinc-400" />
@@ -314,8 +315,8 @@ export function Dashboard({ allProjects = false }: { allProjects?: boolean }) {
                   진행 중인 생성 작업이 없어요
                 </p>
                 <p className="mt-1 text-[11px] text-zinc-400">
-                  AI 생성 기능이 연결되면 작업 진행 상황을 여기에서 확인할 수
-                  있어요.
+                  프로젝트의 이야기 설정에서 AI Story를 생성하면 진행 상황이
+                  여기에 표시됩니다.
                 </p>
               </div>
             </div>
@@ -334,20 +335,17 @@ export function JobList({ jobs }: { jobs: Job[] }) {
           key={job.id}
           className="rounded-xl border border-zinc-200 bg-white p-5"
         >
-          <div className="flex justify-between text-sm">
-            <span>{job.job_type}</span>
+          <div className="flex flex-wrap justify-between gap-2 text-sm">
             <span>
-              {job.status} · {job.progress}%
+              {job.job_type === "story:generate" ? "AI Story" : "생성 작업"}
             </span>
+            <span>{jobStatusLabel(job.status)}</span>
           </div>
-          <progress
-            value={job.progress}
-            max="100"
-            aria-label={`${job.job_type} 진행률`}
-            className="mt-3 h-1.5 w-full accent-violet-600"
-          />
-          {job.error_message && (
-            <p className="mt-2 text-xs text-red-600">{job.error_message}</p>
+          {job.status === "failed" && (
+            <p className="mt-2 text-xs text-red-600">
+              작업을 완료하지 못했습니다. 프로젝트의 이야기 설정에서 다시 생성할
+              수 있어요.
+            </p>
           )}
         </div>
       ))}

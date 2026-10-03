@@ -19,7 +19,7 @@ services:
       - key: STORAGE_PROVIDER
         value: supabase
       - key: MOCK_AI
-        value: "true"
+        value: "false"
       - key: LOCAL_AUTH_SECRET
         generateValue: true
       - key: DATABASE_URL
@@ -45,4 +45,109 @@ services:
       - key: IMAGE_DAILY_LIMIT
         value: "5"
       - key: MOTION_DAILY_LIMIT
+        value: "2"
+      - key: OPENAI_STORY_MODEL
+        value: gpt-5.6-terra
+      - key: OPENAI_IMAGE_MODEL
+        value: gpt-image-2.5-flare
+      - key: OPENAI_IMAGE_REFERENCE_MODEL
+        value: gpt-image-2.5-sunburst
+      - key: OPENAI_IMAGE_SIZE
+        value: 1024x1536
+      - key: OPENAI_IMAGE_QUALITY
+        value: low
+      - key: OPENAI_IMAGE_FORMAT
+        value: webp
+      - key: IMAGE_PROVIDER
+        value: openai
+      - key: FAL_IMAGE_MODEL
+        value: fal-ai/flux-2-pro
+      - key: FAL_REFERENCE_IMAGE_MODEL
+        value: fal-ai/flux-pulid
+      - key: RUNWAY_VIDEO_MODEL
+        value: gen4_turbo
+      - key: RUNWAY_VIDEO_DURATION_SECONDS
+        value: "5"
+
+  - type: worker
+    name: linktoon-generation-worker
+    runtime: python
+    rootDir: apps/api
+    buildCommand: uv sync --frozen --no-dev
+    startCommand: uv run --no-sync python -m app.worker
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.14
+      - key: UV_VERSION
+        value: 0.10.9
+      - key: APP_ENV
+        value: production
+      - key: AUTH_MODE
+        value: supabase
+      - key: STORAGE_PROVIDER
+        value: supabase
+      - key: MOCK_AI
+        value: "false"
+      - key: LOCAL_AUTH_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+      - key: API_PUBLIC_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_STORAGE_BUCKET
+        value: linktoon-private
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_STORY_MODEL
+        value: gpt-5.6-terra
+      - key: OPENAI_IMAGE_MODEL
+        value: gpt-image-2.5-flare
+      - key: OPENAI_IMAGE_REFERENCE_MODEL
+        value: gpt-image-2.5-sunburst
+      - key: OPENAI_IMAGE_SIZE
+        value: 1024x1536
+      - key: OPENAI_IMAGE_QUALITY
+        value: low
+      - key: OPENAI_IMAGE_FORMAT
+        value: webp
+      - key: IMAGE_PROVIDER
+        value: openai
+      - key: FAL_KEY
+        sync: false
+      - key: FAL_IMAGE_MODEL
+        value: fal-ai/flux-2-pro
+      - key: FAL_REFERENCE_IMAGE_MODEL
+        value: fal-ai/flux-pulid
+      - key: RUNWAYML_API_SECRET
+        sync: false
+      - key: RUNWAY_VIDEO_MODEL
+        value: gen4_turbo
+      - key: RUNWAY_VIDEO_DURATION_SECONDS
+        value: "5"
+      - key: RUNWAY_API_VERSION
+        value: "2024-11-06"
+      - key: MAX_VIDEO_BYTES
+        value: "104857600"
+      - key: OPENAI_TIMEOUT_SECONDS
+        value: "90"
+      - key: WORKER_POLL_INTERVAL_SECONDS
+        value: "2"
+      - key: WORKER_LEASE_SECONDS
+        value: "120"
+      - key: WORKER_BATCH_SIZE
+        value: "10"
+      - key: WORKER_MAX_RETRIES
+        value: "3"
+      - key: WORKER_RETRY_BASE_SECONDS
+        value: "2"
+      - key: WORKER_PROVIDER_POLL_SECONDS
         value: "2"

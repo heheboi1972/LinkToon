@@ -16,7 +16,7 @@ export default function JobsPage() {
       <PageHeading
         eyebrow="GENERATION HISTORY"
         title="생성 작업"
-        description="이야기와 이미지가 만들어지는 과정을 한눈에 확인해요."
+        description="AI Story 생성 작업의 현재 상태를 확인해요."
       />
       {jobs.isPending ? (
         <Loading />
@@ -27,7 +27,7 @@ export default function JobsPage() {
       ) : (
         <EmptyState
           title="아직 생성 작업이 없어요"
-          description="비동기 AI 생성과 재시도 기능은 Phase 3에서 연결됩니다. 현재는 직접 업로드한 이미지로 패널을 만들 수 있어요."
+          description="프로젝트의 이야기 설정에서 AI Story를 만들면 작업이 여기에 표시됩니다."
         />
       )}
     </>

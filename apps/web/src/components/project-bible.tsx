@@ -6,6 +6,7 @@ import { api } from "@/lib/api";
 import type { Project } from "@/lib/types";
 import { PageHeading } from "@/components/shell";
 import { ErrorState, Loading } from "@/components/states";
+import { StoryStudio } from "@/components/story-studio";
 interface Bible {
   story_bible: { idea?: string };
   visual_bible: { preset?: string };
@@ -22,6 +23,11 @@ export function ProjectBible({ projectId }: { projectId: string }) {
     queryKey: ["bible", projectId],
     queryFn: () => api<Bible>(`/projects/${projectId}/bible`),
   });
+  if (project.isPending) return <Loading />;
+  if (project.error || !project.data)
+    return (
+      <ErrorState error={project.error} retry={() => void project.refetch()} />
+    );
   return (
     <>
       <Link
@@ -34,7 +40,7 @@ export function ProjectBible({ projectId }: { projectId: string }) {
       <PageHeading
         eyebrow="PROJECT BIBLE"
         title="이야기의 시작점"
-        description={`${project.data?.title || "프로젝트"}를 만들 때 정한 아이디어와 스타일입니다.`}
+        description={`${project.data.title}를 만들 때 정한 아이디어와 스타일입니다.`}
       />
       {bible.isPending ? (
         <Loading />
@@ -64,9 +70,13 @@ export function ProjectBible({ projectId }: { projectId: string }) {
           </div>
         </div>
       )}
-      <p className="mt-6 text-xs leading-6 text-zinc-400">
-        Story Studio의 AI 작성·확장·버전 관리는 Phase 3에서 연결됩니다.
-      </p>
+      <div id="scenes" className="scroll-mt-6">
+        <StoryStudio
+          projectId={projectId}
+          projectGenre={project.data.genre}
+          initialIdea={bible.data?.story_bible.idea || ""}
+        />
+      </div>
     </>
   );
 }

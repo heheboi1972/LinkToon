@@ -19,12 +19,23 @@ from app.storage import LocalStorage, SupabaseStorage, storage_for
 
 def valid_key(key: str) -> bool:
     parts = key.split("/")
-    if len(parts) != 3:
-        return False
     try:
-        for part in parts:
-            UUID(part)
-        return True
+        if len(parts) == 3:
+            for part in parts:
+                UUID(part)
+            return True
+        if (
+            len(parts) == 6
+            and parts[0] == "users"
+            and parts[2] == "projects"
+            and parts[4] == "generated"
+        ):
+            UUID(parts[1])
+            UUID(parts[3])
+            filename = Path(parts[5])
+            UUID(filename.stem)
+            return filename.suffix.lower() in {".png", ".jpg", ".webp"}
+        return False
     except ValueError:
         return False
 

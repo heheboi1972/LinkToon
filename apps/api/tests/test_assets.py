@@ -46,6 +46,13 @@ def test_upload_content_permission_and_immutability(
     asset = result.json()
     assert asset["width"] == 48 and asset["height"] == 64
     assert asset["metadata"]["filename"] == "test.png"
+    assert asset["storage_bucket"] == "local"
+    assert asset["source"] == "upload"
+    assert "provider" not in asset
+    assert "provider_task_id" not in asset
+    assert "provider" not in asset["metadata"]
+    assert "model" not in asset["metadata"]
+    assert asset["generation_job_id"] is None
     assert client.get(asset["public_url"]).content == png
     assert client.get(path).status_code == 401
     assert client.get(f"{path}/content?token=invalid").status_code == 401

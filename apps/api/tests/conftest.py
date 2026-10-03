@@ -14,6 +14,12 @@ from sqlalchemy.engine import make_url
 
 from alembic import command
 
+
+def pytest_configure(config: Any) -> None:
+    # A unique base avoids Windows/OneDrive handles left by a previous pytest process.
+    config.option.basetemp = str(Path(".data") / f"pytest-{os.getpid()}-{uuid4().hex}")
+
+
 os.environ["APP_ENV"] = "test"
 os.environ["AUTH_MODE"] = "local"
 os.environ["STORAGE_PROVIDER"] = "local"

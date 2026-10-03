@@ -22,6 +22,6 @@ try {
     uv sync --python $Python
     if ($LASTEXITCODE -ne 0) { throw 'uv sync failed' }
     uv run alembic upgrade head
-    if ($LASTEXITCODE -ne 0) { throw 'Migration failed. For PostgreSQL start docker compose up -d db redis first.' }
+    if ($LASTEXITCODE -ne 0) { throw 'Migration failed. For PostgreSQL start docker compose up -d db first.' }
 } finally { Pop-Location }
 Write-Output 'Setup complete. Run scripts/start-api.ps1 and npm run dev in separate terminals.'
